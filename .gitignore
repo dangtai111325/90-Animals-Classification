@@ -1,0 +1,9 @@
+animals_dataset/
+.sixth/
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
