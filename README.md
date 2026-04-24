@@ -95,28 +95,42 @@ Kết quả trên được lấy từ các file `classification_report.csv` đã
 
 ## 6. Cấu trúc project trên GitHub
 
+Repo được tổ chức theo nhánh để mỗi model là một không gian làm việc riêng.
+
+Nhánh `main` chỉ chứa tài liệu tổng quan:
+
 ```text
-90-Animals-Classification/
+main/
 ├─ README.md
-├─ .gitignore
-├─ ResNet-50/
-│  ├─ README.md
-│  ├─ QUICK_START.md
-│  ├─ animals_ResNet.ipynb
-│  └─ resnet50_outputs/
-│     ├─ animals_resnet50_final.pth
-│     ├─ animals_resnet50_history.csv
-│     ├─ animals_resnet50_classification_report.csv
-│     └─ *.png
-└─ EfficientNet-B3/
-   ├─ README.md
-   ├─ QUICK_START.md
-   ├─ animals_EfficientNetB3.ipynb
-   └─ efficientnetb3_outputs/
-      ├─ animals_efficientnet_b3_final.pth
-      ├─ animals_efficientnet_b3_history.csv
-      ├─ animals_efficientnet_b3_classification_report.csv
-      └─ *.png
+└─ .gitignore
+```
+
+Nhánh `ResNet-50` chứa trực tiếp notebook, hướng dẫn chạy và output của ResNet-50:
+
+```text
+ResNet-50/
+├─ README.md
+├─ QUICK_START.md
+├─ animals_ResNet.ipynb
+└─ resnet50_outputs/
+   ├─ animals_resnet50_final.pth
+   ├─ animals_resnet50_history.csv
+   ├─ animals_resnet50_classification_report.csv
+   └─ *.png
+```
+
+Nhánh `EfficientNet-B3` chứa trực tiếp notebook, hướng dẫn chạy và output của EfficientNet-B3:
+
+```text
+EfficientNet-B3/
+├─ README.md
+├─ QUICK_START.md
+├─ animals_EfficientNetB3.ipynb
+└─ efficientnetb3_outputs/
+   ├─ animals_efficientnet_b3_final.pth
+   ├─ animals_efficientnet_b3_history.csv
+   ├─ animals_efficientnet_b3_classification_report.csv
+   └─ *.png
 ```
 
 Thư mục `animals_dataset/` không nằm trong repo. Người chạy project cần tự tải dataset từ Kaggle.
@@ -164,8 +178,8 @@ Mỗi folder model có một thư mục output riêng. Những file quan trọng
 
 Repo này được đẩy lên GitHub theo hai nhánh chính:
 
-- `ResNet-50`: chứa tài liệu và folder model ResNet-50.
-- `EfficientNet-B3`: chứa tài liệu và folder model EfficientNet-B3.
+- `main`: chứa README tổng quan của toàn project.
+- `ResNet-50`: chứa trực tiếp notebook ResNet-50, QUICK_START và thư mục output.
+- `EfficientNet-B3`: chứa trực tiếp notebook EfficientNet-B3, QUICK_START và thư mục output.
 
-Mỗi nhánh tập trung vào một model để người đọc có thể clone đúng phần mình muốn học hoặc chạy thử.
-
+Mỗi nhánh model tập trung vào một mô hình để người đọc có thể clone đúng phần mình muốn học hoặc chạy thử mà không phải lọc qua nhiều folder.
