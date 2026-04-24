@@ -1,80 +1,64 @@
-# 90 Animals Classification
+# ResNet-50 Animal Classification
 
-## 1. Project này làm gì?
+## 1. Mục tiêu của folder này
 
-Đây là project phân loại ảnh RGB của **90 lớp động vật** bằng deep learning. Mục tiêu chính là xây dựng, huấn luyện, đánh giá và so sánh hai hướng **transfer learning** phổ biến trong computer vision:
+Folder này chứa toàn bộ notebook, model đã huấn luyện, báo cáo và hình ảnh đánh giá cho hướng **ResNet-50 pretrained** trên bài toán phân loại ảnh RGB của 90 class.
 
-- `ResNet-50`: mô hình CNN residual mạnh, ổn định, dễ dùng làm baseline.
-- `EfficientNet-B3`: mô hình EfficientNet cân bằng giữa độ sâu, độ rộng và kích thước ảnh đầu vào.
-
-Project được viết theo dạng notebook để người học có thể đi từ dữ liệu thô đến kết quả đánh giá cuối cùng mà không cần đọc nhiều file code rời rạc. Mỗi notebook có đủ các bước: quét dataset, chia dữ liệu, tạo DataLoader, build model pretrained, train trên GPU, đánh giá test set, lưu model và xuất biểu đồ.
-
-## 2. Dataset sử dụng
-
-Dataset sử dụng trong project là **Animal Image Dataset (90 Different Animals)** trên Kaggle:
-
-https://www.kaggle.com/datasets/iamsouravbanerjee/animal-image-dataset-90-different-animals
-
-Theo trang Kaggle của dataset, bộ dữ liệu có **5,400 ảnh** thuộc **90 category/class**. Trong bản dữ liệu đang dùng tại project này, mỗi class có đúng **60 ảnh**, nên dataset khá cân bằng và phù hợp để học bài toán multi-class image classification.
-
-Thông tin tổng quan:
-
-| Thuộc tính | Giá trị |
-|---|---:|
-| Tổng số ảnh | 5,400 |
-| Tổng số class | 90 |
-| Số ảnh mỗi class | 60 |
-| Kiểu ảnh | RGB image |
-| Cấu trúc dữ liệu | mỗi class là một folder con |
-| Bài toán | phân loại ảnh vào 1 trong 90 nhãn |
-
-Dataset **không được push lên GitHub** để repo gọn hơn và tôn trọng cách phân phối dữ liệu qua Kaggle. Khi muốn chạy lại notebook, hãy tải dataset từ Kaggle rồi đặt thư mục `animals_dataset` vào project.
-
-## 3. Cấu trúc dataset
-
-Sau khi tải và giải nén, dataset cần có cấu trúc như sau:
+File trung tâm là:
 
 ```text
-90-Animals-Classification/
-├─ animals_dataset/
-│  ├─ antelope/
-│  ├─ badger/
-│  ├─ bat/
-│  ├─ ...
-│  └─ zebra/
+animals_ResNet.ipynb
 ```
 
-Tên folder con chính là tên nhãn. Notebook sẽ tự đọc tên folder để tạo danh sách class, vì vậy không cần viết nhãn thủ công.
+Bạn có thể đọc notebook từ trên xuống để hiểu toàn bộ pipeline, hoặc mở nhanh các file trong `resnet50_outputs/` để xem kết quả đã train.
 
-<details>
-<summary>Danh sách 90 nhãn</summary>
+## 2. ResNet-50 là gì trong project này?
 
-`antelope`, `badger`, `bat`, `bear`, `bee`, `beetle`, `bison`, `boar`, `butterfly`, `cat`, `caterpillar`, `chimpanzee`, `cockroach`, `cow`, `coyote`, `crab`, `crow`, `deer`, `dog`, `dolphin`, `donkey`, `dragonfly`, `duck`, `eagle`, `elephant`, `flamingo`, `fly`, `fox`, `goat`, `goldfish`, `goose`, `gorilla`, `grasshopper`, `hamster`, `hare`, `hedgehog`, `hippopotamus`, `hornbill`, `horse`, `hummingbird`, `hyena`, `jellyfish`, `kangaroo`, `koala`, `ladybugs`, `leopard`, `lion`, `lizard`, `lobster`, `mosquito`, `moth`, `mouse`, `octopus`, `okapi`, `orangutan`, `otter`, `owl`, `ox`, `oyster`, `panda`, `parrot`, `pelecaniformes`, `penguin`, `pig`, `pigeon`, `porcupine`, `possum`, `raccoon`, `rat`, `reindeer`, `rhinoceros`, `sandpiper`, `seahorse`, `seal`, `shark`, `sheep`, `snake`, `sparrow`, `squid`, `squirrel`, `starfish`, `swan`, `tiger`, `turkey`, `turtle`, `whale`, `wolf`, `wombat`, `woodpecker`, `zebra`.
+ResNet-50 là một kiến trúc CNN có residual connection. Ý tưởng chính là cho phép tín hiệu đi tắt qua một số block, giúp mạng sâu hơn nhưng vẫn train ổn định. Trong project này, ResNet-50 không được train từ số 0. Notebook dùng pretrained weights từ ImageNet:
 
-</details>
+```python
+ResNet50_Weights.IMAGENET1K_V2
+```
 
-## 4. Workflow tổng quát
+Phần classifier cuối của ResNet-50 gốc được thay bằng head mới để dự đoán 90 class của dataset.
+
+## 3. Workflow của notebook
 
 ```mermaid
 flowchart TD
-    A[Tải dataset từ Kaggle] --> B[Đặt vào thư mục animals_dataset]
-    B --> C[Notebook quét folder con để lấy nhãn]
-    C --> D[Tạo DataFrame gồm path ảnh và label]
-    D --> E[Chia dữ liệu có stratify]
-    E --> F[Train 72%]
-    E --> G[Validation 8%]
-    E --> H[Test 20%]
-    F --> I[Augmentation và DataLoader]
-    G --> I
-    H --> J[DataLoader test]
-    I --> K[Load pretrained backbone ImageNet]
-    K --> L[Giai đoạn 1: train classifier head]
-    L --> M[Giai đoạn 2: fine-tune layer cuối]
-    M --> N[Evaluate trên test set]
-    N --> O[Lưu model, report CSV, biểu đồ]
+    A[animals_dataset] --> B[Quét 90 folder class]
+    B --> C[Tạo bảng image_path và label]
+    C --> D[Chia train, validation, test bằng stratify]
+    D --> E[Transform và augmentation 224x224]
+    E --> F[DataLoader PyTorch]
+    F --> G[Load ResNet-50 pretrained ImageNet]
+    G --> H[Thay fully connected layer thành 90 output]
+    H --> I[Train head 5 epoch]
+    I --> J[Fine-tune layer4 5 epoch]
+    J --> K[Evaluate test set]
+    K --> L[Lưu model, CSV report, biểu đồ]
 ```
 
-Tỉ lệ chia dữ liệu thực tế:
+## 4. Cấu hình chính
+
+| Thành phần | Giá trị |
+|---|---:|
+| Backbone | ResNet-50 |
+| Pretrained weights | ImageNet-1K V2 |
+| Framework | PyTorch + TorchVision |
+| Input size | 224x224 |
+| Batch size | 256 |
+| Tổng epoch | 10 |
+| Train head | 5 epoch |
+| Fine-tune | 5 epoch |
+| Layer mở khi fine-tune | `layer4` |
+| Optimizer | AdamW |
+| Loss | CrossEntropyLoss |
+| GPU | CUDA, ví dụ NVIDIA RTX A3000 12GB |
+
+## 5. Chia dữ liệu
+
+Dataset có 5,400 ảnh và 90 class. Notebook chia dữ liệu như sau:
 
 | Split | Số ảnh | Tỉ lệ |
 |---|---:|---:|
@@ -82,90 +66,60 @@ Tỉ lệ chia dữ liệu thực tế:
 | Validation | 432 | 8% |
 | Test | 1,080 | 20% |
 
-Notebook dùng `stratify` khi chia dữ liệu, nên mỗi split giữ phân bố lớp cân bằng nhất có thể.
+Việc chia dữ liệu dùng `stratify`, nghĩa là mỗi split cố gắng giữ phân phối class giống dataset gốc.
 
-## 5. Hai model trong project
+## 6. Chiến lược train
 
-| Model | Notebook | Input size | Pretrained weights | Fine-tune | Test accuracy | Macro F1 |
-|---|---|---:|---|---|---:|---:|
-| ResNet-50 | `ResNet-50/animals_ResNet.ipynb` | 224x224 | ImageNet-1K V2 | `layer4` | 93.70% | 93.45% |
-| EfficientNet-B3 | `EfficientNet-B3/animals_EfficientNetB3.ipynb` | 300x300 | ImageNet-1K V1 | `last_stage` | 93.98% | 93.89% |
+Notebook train theo hai giai đoạn:
 
-Kết quả trên được lấy từ các file `classification_report.csv` đã lưu trong từng thư mục output. Vì quá trình train có augmentation và GPU có thể khác nhau, kết quả khi chạy lại có thể dao động nhẹ.
+**Giai đoạn 1: train classifier head**
 
-## 6. Cấu trúc project trên GitHub
+Backbone ResNet-50 được đóng băng. Notebook chỉ train phần classifier mới thêm vào. Giai đoạn này giúp lớp phân loại cuối học cách ánh xạ feature ImageNet sang 90 class mới.
 
-```text
-90-Animals-Classification/
-├─ README.md
-├─ .gitignore
-├─ ResNet-50/
-│  ├─ README.md
-│  ├─ QUICK_START.md
-│  ├─ animals_ResNet.ipynb
-│  └─ resnet50_outputs/
-│     ├─ animals_resnet50_final.pth
-│     ├─ animals_resnet50_history.csv
-│     ├─ animals_resnet50_classification_report.csv
-│     └─ *.png
-└─ EfficientNet-B3/
-   ├─ README.md
-   ├─ QUICK_START.md
-   ├─ animals_EfficientNetB3.ipynb
-   └─ efficientnetb3_outputs/
-      ├─ animals_efficientnet_b3_final.pth
-      ├─ animals_efficientnet_b3_history.csv
-      ├─ animals_efficientnet_b3_classification_report.csv
-      └─ *.png
-```
+**Giai đoạn 2: fine-tune `layer4`**
 
-Thư mục `animals_dataset/` không nằm trong repo. Người chạy project cần tự tải dataset từ Kaggle.
+Sau khi head đã ổn định, notebook mở `layer4` của ResNet-50 để tinh chỉnh feature cấp cao cho dataset mới. Learning rate ở giai đoạn này nhỏ hơn để tránh làm hỏng pretrained weights.
 
-## 7. Mỗi notebook gồm những phần nào?
+## 7. Kết quả đã lưu
 
-Hai notebook được thiết kế cùng một cấu trúc để dễ so sánh:
+Kết quả hiện có trong `resnet50_outputs/`:
 
-1. Thiết lập môi trường, import thư viện và kiểm tra CUDA GPU.
-2. Khai báo đường dẫn, batch size, số epoch và tham số train.
-3. Quét dataset, thống kê số ảnh, số class và phân phối class.
-4. Chia dữ liệu thành train, validation và test.
-5. Tạo transform, augmentation, custom Dataset và DataLoader.
-6. Load model pretrained từ ImageNet và thay classifier cuối thành 90 class.
-7. Train 2 giai đoạn: train head trước, fine-tune layer cuối sau.
-8. Đánh giá trên test set bằng accuracy, precision, recall, macro F1 và weighted F1.
-9. Vẽ biểu đồ training curve, confusion matrix, class yếu nhất, cặp nhầm lẫn nhiều nhất.
-10. Lưu model, label mapping, config và report.
+| Metric | Giá trị |
+|---|---:|
+| Test accuracy | 93.70% |
+| Macro precision | 94.48% |
+| Macro recall | 93.70% |
+| Macro F1 | 93.45% |
+| Test samples | 1,080 |
 
-## 8. Vì sao dùng transfer learning?
+Các file quan trọng:
 
-Dataset này có 5,400 ảnh cho 90 class, trung bình 60 ảnh mỗi class. Nếu train một CNN lớn từ đầu, mô hình phải tự học mọi đặc trưng thị giác như cạnh, texture, hình dạng, bộ phận cơ thể, màu sắc và bối cảnh chỉ từ lượng dữ liệu khá nhỏ. Điều này thường làm train lâu hơn và dễ overfit.
-
-Transfer learning giúp tận dụng backbone đã học trước trên ImageNet. Backbone đã biết nhiều đặc trưng ảnh tổng quát, còn project này chỉ cần điều chỉnh phần classifier và fine-tune layer cuối để thích nghi với 90 class của dataset.
-
-## 9. Kết quả đầu ra cần đọc như thế nào?
-
-Mỗi folder model có một thư mục output riêng. Những file quan trọng nhất:
-
-| File | Ý nghĩa |
+| File | Mục đích |
 |---|---|
-| `*_final.pth` | trọng số model cuối cùng |
-| `*_history.csv` | loss, accuracy, F1 theo từng epoch |
-| `*_classification_report.csv` | precision, recall, F1, support của 90 class |
-| `*_training_curves.png` | đường cong train/validation |
-| `*_metric_overview.png` | tổng quan score trên test set |
-| `*_confusion_matrix.png` | ma trận nhầm lẫn tuyệt đối |
-| `*_confusion_matrix_normalized.png` | ma trận nhầm lẫn chuẩn hóa |
-| `*_worst_classes.png` | 15 class có F1 thấp nhất |
-| `*_top_confusions.png` | 15 cặp class bị nhầm nhiều nhất |
-| `*_correct_predictions.png` | ví dụ dự đoán đúng |
-| `*_incorrect_predictions.png` | ví dụ dự đoán sai |
+| `animals_resnet50_final.pth` | trọng số model cuối cùng |
+| `animals_resnet50_config.json` | cấu hình train |
+| `animals_resnet50_labels.json` | mapping nhãn |
+| `animals_resnet50_history.csv` | log theo epoch |
+| `animals_resnet50_classification_report.csv` | report 90 class |
+| `animals_resnet50_training_curves.png` | biểu đồ loss, accuracy, F1 |
+| `animals_resnet50_confusion_matrix.png` | confusion matrix |
+| `animals_resnet50_confusion_matrix_normalized.png` | confusion matrix chuẩn hóa |
+| `animals_resnet50_worst_classes.png` | 15 class có F1 thấp nhất |
+| `animals_resnet50_top_confusions.png` | 15 cặp nhầm lẫn nhiều nhất |
+| `animals_resnet50_correct_predictions.png` | ví dụ dự đoán đúng |
+| `animals_resnet50_incorrect_predictions.png` | ví dụ dự đoán sai |
 
-## 10. Nhánh GitHub
+## 8. Cách đọc kết quả
 
-Repo này được đẩy lên GitHub theo hai nhánh chính:
+`accuracy` cho biết tỉ lệ ảnh test được dự đoán đúng. Với dataset cân bằng, accuracy là chỉ số dễ hiểu và khá hữu ích.
 
-- `ResNet-50`: chứa tài liệu và folder model ResNet-50.
-- `EfficientNet-B3`: chứa tài liệu và folder model EfficientNet-B3.
+`macro F1` tính F1 trung bình đều trên 90 class, không ưu tiên class nào nhiều hơn. Đây là chỉ số rất quan trọng vì nó cho thấy model có học đều các class hay không.
 
-Mỗi nhánh tập trung vào một model để người đọc có thể clone đúng phần mình muốn học hoặc chạy thử.
+`confusion matrix` giúp nhìn các class nào hay bị nhầm với nhau. Nếu một hàng có nhiều giá trị ngoài đường chéo chính, nghĩa là class thật đó đang bị model dự đoán sang class khác.
+
+`worst_classes.png` tập trung vào 15 class có F1 thấp nhất. Đây là nơi nên xem đầu tiên nếu muốn cải thiện model.
+
+## 9. Khi nào nên dùng ResNet-50?
+
+ResNet-50 là lựa chọn tốt khi cần một baseline mạnh, dễ giải thích và có nhiều tài liệu học tập. So với EfficientNet-B3, ResNet-50 thường dễ hiểu hơn về mặt kiến trúc, nhưng model file lớn hơn và số tham số nhiều hơn.
 
