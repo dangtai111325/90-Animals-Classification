@@ -1,81 +1,66 @@
-# 90 Animals Classification
+# DenseNet201 Animal Classification
 
-## 1. Project này làm gì?
+## 1. Mục tiêu của folder này
 
-Đây là project phân loại ảnh RGB của **90 lớp động vật** bằng deep learning. Mục tiêu chính là xây dựng, huấn luyện, đánh giá và so sánh các hướng **transfer learning** phổ biến trong computer vision:
+Folder này chứa notebook, model đã huấn luyện, báo cáo và hình ảnh đánh giá cho hướng **DenseNet201 pretrained** trên bài toán phân loại ảnh RGB của 90 class động vật.
 
-- `ResNet-50`: mô hình CNN residual mạnh, ổn định, dễ dùng làm baseline.
-- `EfficientNet-B3`: mô hình EfficientNet cân bằng giữa độ sâu, độ rộng và kích thước ảnh đầu vào.
-- `DenseNet201`: mô hình CNN dùng dense connection để tái sử dụng feature qua nhiều layer.
-
-Project được viết theo dạng notebook để người học có thể đi từ dữ liệu thô đến kết quả đánh giá cuối cùng mà không cần đọc nhiều file code rời rạc. Mỗi notebook có đủ các bước: quét dataset, chia dữ liệu, tạo DataLoader, build model pretrained, train trên GPU, đánh giá test set, lưu model và xuất biểu đồ.
-
-## 2. Dataset sử dụng
-
-Dataset sử dụng trong project là **Animal Image Dataset (90 Different Animals)** trên Kaggle:
-
-https://www.kaggle.com/datasets/iamsouravbanerjee/animal-image-dataset-90-different-animals
-
-Theo trang Kaggle của dataset, bộ dữ liệu có **5,400 ảnh** thuộc **90 category/class**. Trong bản dữ liệu đang dùng tại project này, mỗi class có đúng **60 ảnh**, nên dataset khá cân bằng và phù hợp để học bài toán multi-class image classification.
-
-Thông tin tổng quan:
-
-| Thuộc tính | Giá trị |
-|---|---:|
-| Tổng số ảnh | 5,400 |
-| Tổng số class | 90 |
-| Số ảnh mỗi class | 60 |
-| Kiểu ảnh | RGB image |
-| Cấu trúc dữ liệu | mỗi class là một folder con |
-| Bài toán | phân loại ảnh vào 1 trong 90 nhãn |
-
-Dataset **không được push lên GitHub** để repo gọn hơn và tôn trọng cách phân phối dữ liệu qua Kaggle. Khi muốn chạy lại notebook, hãy tải dataset từ Kaggle rồi đặt thư mục `animals_dataset` vào project.
-
-## 3. Cấu trúc dataset
-
-Sau khi tải và giải nén, dataset cần có cấu trúc như sau:
+File trung tâm là:
 
 ```text
-90-Animals-Classification/
-├─ animals_dataset/
-│  ├─ antelope/
-│  ├─ badger/
-│  ├─ bat/
-│  ├─ ...
-│  └─ zebra/
+animals_DenseNet201.ipynb
 ```
 
-Tên folder con chính là tên nhãn. Notebook sẽ tự đọc tên folder để tạo danh sách class, vì vậy không cần viết nhãn thủ công.
+Notebook được viết trọn vẹn trong một file để người mới có thể chạy theo thứ tự từ trên xuống: đọc dataset, build model, train GPU, đánh giá và lưu kết quả.
 
-<details>
-<summary>Danh sách 90 nhãn</summary>
+## 2. DenseNet201 là gì trong project này?
 
-`antelope`, `badger`, `bat`, `bear`, `bee`, `beetle`, `bison`, `boar`, `butterfly`, `cat`, `caterpillar`, `chimpanzee`, `cockroach`, `cow`, `coyote`, `crab`, `crow`, `deer`, `dog`, `dolphin`, `donkey`, `dragonfly`, `duck`, `eagle`, `elephant`, `flamingo`, `fly`, `fox`, `goat`, `goldfish`, `goose`, `gorilla`, `grasshopper`, `hamster`, `hare`, `hedgehog`, `hippopotamus`, `hornbill`, `horse`, `hummingbird`, `hyena`, `jellyfish`, `kangaroo`, `koala`, `ladybugs`, `leopard`, `lion`, `lizard`, `lobster`, `mosquito`, `moth`, `mouse`, `octopus`, `okapi`, `orangutan`, `otter`, `owl`, `ox`, `oyster`, `panda`, `parrot`, `pelecaniformes`, `penguin`, `pig`, `pigeon`, `porcupine`, `possum`, `raccoon`, `rat`, `reindeer`, `rhinoceros`, `sandpiper`, `seahorse`, `seal`, `shark`, `sheep`, `snake`, `sparrow`, `squid`, `squirrel`, `starfish`, `swan`, `tiger`, `turkey`, `turtle`, `whale`, `wolf`, `wombat`, `woodpecker`, `zebra`.
+DenseNet là họ CNN dùng cơ chế **dense connection**: mỗi layer nhận feature từ nhiều layer trước đó. Cách nối dày đặc này giúp feature được tái sử dụng tốt hơn, gradient truyền ổn định hơn và mô hình có thể học đặc trưng ảnh hiệu quả.
 
-</details>
+Trong project này, notebook dùng pretrained weights:
 
-## 4. Workflow tổng quát
+```python
+DenseNet201_Weights.IMAGENET1K_V1
+```
+
+Classifier cuối của DenseNet201 được thay bằng head mới để dự đoán 90 class của dataset.
+
+## 3. Workflow của notebook
 
 ```mermaid
 flowchart TD
-    A[Tải dataset từ Kaggle] --> B[Đặt vào thư mục animals_dataset]
-    B --> C[Notebook quét folder con để lấy nhãn]
-    C --> D[Tạo DataFrame gồm path ảnh và label]
-    D --> E[Chia dữ liệu có stratify]
-    E --> F[Train 72%]
-    E --> G[Validation 8%]
-    E --> H[Test 20%]
-    F --> I[Augmentation và DataLoader]
-    G --> I
-    H --> J[DataLoader test]
-    I --> K[Load pretrained backbone ImageNet]
-    K --> L[Giai đoạn 1: train classifier head]
-    L --> M[Giai đoạn 2: fine-tune layer cuối]
-    M --> N[Evaluate trên test set]
-    N --> O[Lưu model, report CSV, biểu đồ]
+    A[animals_dataset] --> B[Quét 90 folder class]
+    B --> C[Tạo DataFrame image_path và label]
+    C --> D[Chia train, validation, test bằng stratify]
+    D --> E[Transform và augmentation 224x224]
+    E --> F[DataLoader PyTorch]
+    F --> G[Load DenseNet201 pretrained ImageNet]
+    G --> H[Thay classifier thành 90 output]
+    H --> I[Train classifier head 5 epoch]
+    I --> J[Fine-tune last_denseblock 5 epoch]
+    J --> K[Evaluate test set]
+    K --> L[Lưu model, CSV report, biểu đồ]
 ```
 
-Tỉ lệ chia dữ liệu thực tế:
+## 4. Cấu hình chính
+
+| Thành phần | Giá trị |
+|---|---:|
+| Backbone | DenseNet201 |
+| Pretrained weights | ImageNet-1K V1 |
+| Framework | PyTorch + TorchVision |
+| Input size | 224x224 |
+| Batch size | 128 |
+| Tổng epoch | 10 |
+| Train head | 5 epoch |
+| Fine-tune | 5 epoch |
+| Layer mở khi fine-tune | `last_denseblock` |
+| Optimizer | AdamW |
+| Loss | CrossEntropyLoss |
+| GPU | CUDA, ví dụ NVIDIA RTX A3000 12GB |
+
+## 5. Chia dữ liệu
+
+Dataset có 5,400 ảnh và 90 class. Notebook chia dữ liệu như sau:
 
 | Split | Số ảnh | Tỉ lệ |
 |---|---:|---:|
@@ -83,120 +68,59 @@ Tỉ lệ chia dữ liệu thực tế:
 | Validation | 432 | 8% |
 | Test | 1,080 | 20% |
 
-Notebook dùng `stratify` khi chia dữ liệu, nên mỗi split giữ phân bố lớp cân bằng nhất có thể.
+Việc chia dữ liệu dùng `stratify`, nên các class được giữ cân bằng giữa train, validation và test.
 
-## 5. Các model trong project
+## 6. Chiến lược train
 
-| Model | Notebook | Input size | Pretrained weights | Fine-tune | Test accuracy | Macro F1 |
-|---|---|---:|---|---|---:|---:|
-| ResNet-50 | `ResNet-50/animals_ResNet.ipynb` | 224x224 | ImageNet-1K V2 | `layer4` | 93.70% | 93.45% |
-| EfficientNet-B3 | `EfficientNet-B3/animals_EfficientNetB3.ipynb` | 300x300 | ImageNet-1K V1 | `last_stage` | 93.98% | 93.89% |
-| DenseNet201 | `DenseNet201/animals_DenseNet201.ipynb` | 224x224 | ImageNet-1K V1 | `last_denseblock` | 93.61% | 93.59% |
+Notebook train theo hai giai đoạn:
 
-Kết quả trên được lấy từ các file `classification_report.csv` đã lưu trong từng thư mục output. Vì quá trình train có augmentation và GPU có thể khác nhau, kết quả khi chạy lại có thể dao động nhẹ.
+**Giai đoạn 1: train classifier head**
 
-## 6. Cấu trúc project trên GitHub
+Backbone DenseNet201 được đóng băng. Notebook chỉ train classifier mới thêm vào để học mapping từ feature ImageNet sang 90 nhãn của dataset.
 
-Repo được tổ chức theo nhánh để mỗi model là một không gian làm việc riêng.
+**Giai đoạn 2: fine-tune `last_denseblock`**
 
-Nhánh `main` chỉ chứa tài liệu tổng quan:
+Notebook mở dense block cuối của DenseNet201 và tiếp tục train với learning rate nhỏ hơn. Mục đích là tinh chỉnh feature cấp cao cho dataset animals nhưng vẫn giữ lại phần lớn kiến thức ImageNet.
 
-```text
-main/
-├─ README.md
-└─ .gitignore
-```
+## 7. Kết quả đã lưu
 
-Nhánh `ResNet-50` chứa trực tiếp notebook, hướng dẫn chạy và output của ResNet-50:
+Kết quả hiện có trong `densenet201_outputs/`:
 
-```text
-ResNet-50/
-├─ README.md
-├─ QUICK_START.md
-├─ animals_ResNet.ipynb
-└─ resnet50_outputs/
-   ├─ animals_resnet50_final.pth
-   ├─ animals_resnet50_history.csv
-   ├─ animals_resnet50_classification_report.csv
-   └─ *.png
-```
+| Metric | Giá trị |
+|---|---:|
+| Test accuracy | 93.61% |
+| Macro precision | 94.13% |
+| Macro recall | 93.61% |
+| Macro F1 | 93.59% |
+| Test samples | 1,080 |
 
-Nhánh `EfficientNet-B3` chứa trực tiếp notebook, hướng dẫn chạy và output của EfficientNet-B3:
+Các file quan trọng:
 
-```text
-EfficientNet-B3/
-├─ README.md
-├─ QUICK_START.md
-├─ animals_EfficientNetB3.ipynb
-└─ efficientnetb3_outputs/
-   ├─ animals_efficientnet_b3_final.pth
-   ├─ animals_efficientnet_b3_history.csv
-   ├─ animals_efficientnet_b3_classification_report.csv
-   └─ *.png
-```
-
-Nhánh `DenseNet` chứa trực tiếp notebook, hướng dẫn chạy và output của DenseNet201:
-
-```text
-DenseNet/
-├─ README.md
-├─ QUICK_START.md
-├─ animals_DenseNet201.ipynb
-└─ densenet201_outputs/
-   ├─ animals_densenet201_final.pth
-   ├─ animals_densenet201_history.csv
-   ├─ animals_densenet201_classification_report.csv
-   └─ *.png
-```
-
-Thư mục `animals_dataset/` không nằm trong repo. Người chạy project cần tự tải dataset từ Kaggle.
-
-## 7. Mỗi notebook gồm những phần nào?
-
-Các notebook được thiết kế cùng một cấu trúc để dễ so sánh:
-
-1. Thiết lập môi trường, import thư viện và kiểm tra CUDA GPU.
-2. Khai báo đường dẫn, batch size, số epoch và tham số train.
-3. Quét dataset, thống kê số ảnh, số class và phân phối class.
-4. Chia dữ liệu thành train, validation và test.
-5. Tạo transform, augmentation, custom Dataset và DataLoader.
-6. Load model pretrained từ ImageNet và thay classifier cuối thành 90 class.
-7. Train 2 giai đoạn: train head trước, fine-tune layer cuối sau.
-8. Đánh giá trên test set bằng accuracy, precision, recall, macro F1 và weighted F1.
-9. Vẽ biểu đồ training curve, confusion matrix, class yếu nhất, cặp nhầm lẫn nhiều nhất.
-10. Lưu model, label mapping, config và report.
-
-## 8. Vì sao dùng transfer learning?
-
-Dataset này có 5,400 ảnh cho 90 class, trung bình 60 ảnh mỗi class. Nếu train một CNN lớn từ đầu, mô hình phải tự học mọi đặc trưng thị giác như cạnh, texture, hình dạng, bộ phận cơ thể, màu sắc và bối cảnh chỉ từ lượng dữ liệu khá nhỏ. Điều này thường làm train lâu hơn và dễ overfit.
-
-Transfer learning giúp tận dụng backbone đã học trước trên ImageNet. Backbone đã biết nhiều đặc trưng ảnh tổng quát, còn project này chỉ cần điều chỉnh phần classifier và fine-tune layer cuối để thích nghi với 90 class của dataset.
-
-## 9. Kết quả đầu ra cần đọc như thế nào?
-
-Mỗi folder model có một thư mục output riêng. Những file quan trọng nhất:
-
-| File | Ý nghĩa |
+| File | Mục đích |
 |---|---|
-| `*_final.pth` | trọng số model cuối cùng |
-| `*_history.csv` | loss, accuracy, F1 theo từng epoch |
-| `*_classification_report.csv` | precision, recall, F1, support của 90 class |
-| `*_training_curves.png` | đường cong train/validation |
-| `*_metric_overview.png` | tổng quan score trên test set |
-| `*_confusion_matrix.png` | ma trận nhầm lẫn tuyệt đối |
-| `*_confusion_matrix_normalized.png` | ma trận nhầm lẫn chuẩn hóa |
-| `*_worst_classes.png` | 15 class có F1 thấp nhất |
-| `*_top_confusions.png` | 15 cặp class bị nhầm nhiều nhất |
-| `*_correct_predictions.png` | ví dụ dự đoán đúng |
-| `*_incorrect_predictions.png` | ví dụ dự đoán sai |
+| `animals_densenet201_final.pth` | trọng số model cuối cùng |
+| `animals_densenet201_config.json` | cấu hình train |
+| `animals_densenet201_labels.json` | mapping nhãn |
+| `animals_densenet201_history.csv` | log theo epoch |
+| `animals_densenet201_classification_report.csv` | report 90 class |
+| `animals_densenet201_training_curves.png` | biểu đồ loss, accuracy, F1 |
+| `animals_densenet201_confusion_matrix.png` | confusion matrix |
+| `animals_densenet201_confusion_matrix_normalized.png` | confusion matrix chuẩn hóa |
+| `animals_densenet201_worst_classes.png` | 15 class có F1 thấp nhất |
+| `animals_densenet201_top_confusions.png` | 15 cặp nhầm lẫn nhiều nhất |
+| `animals_densenet201_correct_predictions.png` | ví dụ dự đoán đúng |
+| `animals_densenet201_incorrect_predictions.png` | ví dụ dự đoán sai |
 
-## 10. Nhánh GitHub
+## 8. Cách đọc kết quả
 
-Repo này được đẩy lên GitHub theo các nhánh chính:
+`accuracy` cho biết tỉ lệ ảnh test dự đoán đúng.
 
-- `main`: chứa README tổng quan của toàn project.
-- `ResNet-50`: chứa trực tiếp notebook ResNet-50, QUICK_START và thư mục output.
-- `EfficientNet-B3`: chứa trực tiếp notebook EfficientNet-B3, QUICK_START và thư mục output.
-- `DenseNet`: chứa trực tiếp notebook DenseNet201, QUICK_START và thư mục output.
+`macro F1` cho biết model có học đều trên 90 class hay không. Đây là chỉ số quan trọng vì dataset có nhiều class và một số class có thể dễ bị nhầm do hình dạng hoặc bối cảnh gần nhau.
 
-Mỗi nhánh model tập trung vào một mô hình để người đọc có thể clone đúng phần mình muốn học hoặc chạy thử mà không phải lọc qua nhiều folder.
+`confusion matrix` giúp xem class nào bị nhầm sang class nào.
+
+`top_confusions.png` chỉ vẽ 15 cặp nhầm nhiều nhất để biểu đồ dễ đọc, còn bảng text trong notebook có thể in toàn bộ các cặp bị nhầm.
+
+## 9. Khi nào nên dùng DenseNet201?
+
+DenseNet201 phù hợp khi muốn thử một CNN pretrained có cơ chế tái sử dụng feature mạnh và dễ so sánh với ResNet/EfficientNet. So với ResNet-50, DenseNet201 có cách truyền feature khác nên rất hữu ích cho mục tiêu học kiến trúc CNN. Điểm cần chú ý là model vẫn khá nặng, nên nếu GPU hết VRAM thì giảm `BATCH_SIZE` trước.
