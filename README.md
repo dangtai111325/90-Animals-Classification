@@ -2,10 +2,11 @@
 
 ## 1. Project này làm gì?
 
-Đây là project phân loại ảnh RGB của **90 lớp động vật** bằng deep learning. Mục tiêu chính là xây dựng, huấn luyện, đánh giá và so sánh hai hướng **transfer learning** phổ biến trong computer vision:
+Đây là project phân loại ảnh RGB của **90 lớp động vật** bằng deep learning. Mục tiêu chính là xây dựng, huấn luyện, đánh giá và so sánh các hướng **transfer learning** phổ biến trong computer vision:
 
 - `ResNet-50`: mô hình CNN residual mạnh, ổn định, dễ dùng làm baseline.
 - `EfficientNet-B3`: mô hình EfficientNet cân bằng giữa độ sâu, độ rộng và kích thước ảnh đầu vào.
+- `DenseNet201`: mô hình CNN dùng dense connection để tái sử dụng feature qua nhiều layer.
 
 Project được viết theo dạng notebook để người học có thể đi từ dữ liệu thô đến kết quả đánh giá cuối cùng mà không cần đọc nhiều file code rời rạc. Mỗi notebook có đủ các bước: quét dataset, chia dữ liệu, tạo DataLoader, build model pretrained, train trên GPU, đánh giá test set, lưu model và xuất biểu đồ.
 
@@ -84,12 +85,13 @@ Tỉ lệ chia dữ liệu thực tế:
 
 Notebook dùng `stratify` khi chia dữ liệu, nên mỗi split giữ phân bố lớp cân bằng nhất có thể.
 
-## 5. Hai model trong project
+## 5. Các model trong project
 
 | Model | Notebook | Input size | Pretrained weights | Fine-tune | Test accuracy | Macro F1 |
 |---|---|---:|---|---|---:|---:|
 | ResNet-50 | `ResNet-50/animals_ResNet.ipynb` | 224x224 | ImageNet-1K V2 | `layer4` | 93.70% | 93.45% |
 | EfficientNet-B3 | `EfficientNet-B3/animals_EfficientNetB3.ipynb` | 300x300 | ImageNet-1K V1 | `last_stage` | 93.98% | 93.89% |
+| DenseNet201 | `DenseNet201/animals_DenseNet201.ipynb` | 224x224 | ImageNet-1K V1 | `last_denseblock` | 93.61% | 93.59% |
 
 Kết quả trên được lấy từ các file `classification_report.csv` đã lưu trong từng thư mục output. Vì quá trình train có augmentation và GPU có thể khác nhau, kết quả khi chạy lại có thể dao động nhẹ.
 
@@ -133,11 +135,25 @@ EfficientNet-B3/
    └─ *.png
 ```
 
+Nhánh `DenseNet` chứa trực tiếp notebook, hướng dẫn chạy và output của DenseNet201:
+
+```text
+DenseNet/
+├─ README.md
+├─ QUICK_START.md
+├─ animals_DenseNet201.ipynb
+└─ densenet201_outputs/
+   ├─ animals_densenet201_final.pth
+   ├─ animals_densenet201_history.csv
+   ├─ animals_densenet201_classification_report.csv
+   └─ *.png
+```
+
 Thư mục `animals_dataset/` không nằm trong repo. Người chạy project cần tự tải dataset từ Kaggle.
 
 ## 7. Mỗi notebook gồm những phần nào?
 
-Hai notebook được thiết kế cùng một cấu trúc để dễ so sánh:
+Các notebook được thiết kế cùng một cấu trúc để dễ so sánh:
 
 1. Thiết lập môi trường, import thư viện và kiểm tra CUDA GPU.
 2. Khai báo đường dẫn, batch size, số epoch và tham số train.
@@ -176,10 +192,11 @@ Mỗi folder model có một thư mục output riêng. Những file quan trọng
 
 ## 10. Nhánh GitHub
 
-Repo này được đẩy lên GitHub theo hai nhánh chính:
+Repo này được đẩy lên GitHub theo các nhánh chính:
 
 - `main`: chứa README tổng quan của toàn project.
 - `ResNet-50`: chứa trực tiếp notebook ResNet-50, QUICK_START và thư mục output.
 - `EfficientNet-B3`: chứa trực tiếp notebook EfficientNet-B3, QUICK_START và thư mục output.
+- `DenseNet`: chứa trực tiếp notebook DenseNet201, QUICK_START và thư mục output.
 
 Mỗi nhánh model tập trung vào một mô hình để người đọc có thể clone đúng phần mình muốn học hoặc chạy thử mà không phải lọc qua nhiều folder.
